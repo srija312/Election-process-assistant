@@ -50,7 +50,7 @@ function App() {
       return;
     }
 
-    const sanitizedInput = inputText.substring(0, 500); // Enforce max length
+    const sanitizedInput = inputText.substring(0, 500).replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Enforce max length and sanitize
     const userMessage = { role: 'user', content: sanitizedInput };
     setChatHistory(prev => [...prev, userMessage]);
     setInputText('');

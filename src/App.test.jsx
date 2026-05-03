@@ -44,3 +44,22 @@ test('validates API key length', async () => {
 
   expect(window.alert).toHaveBeenCalledWith("Please enter a valid API key.");
 });
+
+test('toggles voice state', () => {
+  render(<App />);
+  const voiceBtn = screen.getByRole('button', { name: /Toggle Voice/i });
+  expect(voiceBtn).toHaveTextContent('🔇 Voice Off');
+  
+  fireEvent.click(voiceBtn);
+  expect(voiceBtn).toHaveTextContent('🔊 Voice On');
+});
+
+test('does not send empty chat messages', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /Select English/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Select state Tamil Nadu/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Ask AI/i }));
+  
+  const sendBtn = screen.getByRole('button', { name: /Send Message/i });
+  expect(sendBtn).toBeDisabled();
+});

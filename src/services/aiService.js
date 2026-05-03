@@ -10,10 +10,21 @@ export const generateAIResponse = async ({ apiKey, lang, userState, inputText })
   User Question: ${inputText}`;
 
   try {
-    const response = await ai.models.generateContent({
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Request timed out")), 15000) // 15s timeout
+    );
+    
+    const apiPromise = ai.models.generateContent({
       model: 'gemini-1.5-flash',
       contents: prompt,
     });
+
+    const response = await Promise.race([apiPromise, timeoutPromise]);
+    
+    if (!response || !response.text) {
+      throw new Error("Malformed response from AI service");
+    }
+    
     return response.text;
   } catch (error) {
     console.error("AI Service Error:", error);

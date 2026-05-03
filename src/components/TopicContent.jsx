@@ -1,7 +1,7 @@
 import React from 'react';
 import { stateElectionData } from '../stateData';
 
-const TopicContent = ({ topic, t, mode, userState, shareToWhatsApp }) => {
+const TopicContent = React.memo(({ topic, t, mode, userState, shareToWhatsApp }) => {
   if (topic === 'process') {
     return (
       <div className="content-view">
@@ -187,6 +187,6 @@ const TopicContent = ({ topic, t, mode, userState, shareToWhatsApp }) => {
     );
   }
   return <p aria-live="polite">Content coming soon for {topic}...</p>;
-};
+});
 
 export default TopicContent;
