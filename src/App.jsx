@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { GoogleGenAI } from '@google/genai'
+import { generateAIResponse } from './services/aiService'
+import TopicContent from './components/TopicContent'
 import { languages, states, translations } from './translations'
 import { stateElectionData } from './stateData'
 
@@ -13,6 +14,7 @@ function App() {
   const [isListening, setIsListening] = useState(false)
   const [chatHistory, setChatHistory] = useState([])
   const [inputText, setInputText] = useState('')
+  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '')
   const [showSettings, setShowSettings] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const chatEndRef = useRef(null)
@@ -27,8 +29,12 @@ function App() {
   }, [chatHistory, isTyping]);
 
   const saveApiKey = (key) => {
-    setApiKey(key);
-    localStorage.setItem('gemini_api_key', key);
+    if (key.trim().length < 10) {
+      alert("Please enter a valid API key.");
+      return;
+    }
+    setApiKey(key.trim());
+    localStorage.setItem('gemini_api_key', key.trim());
     setShowSettings(false);
   }
 
@@ -44,28 +50,18 @@ function App() {
       return;
     }
 
-    const userMessage = { role: 'user', content: inputText };
+    const sanitizedInput = inputText.substring(0, 500); // Enforce max length
+    const userMessage = { role: 'user', content: sanitizedInput };
     setChatHistory(prev => [...prev, userMessage]);
     setInputText('');
     setIsTyping(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: apiKey });
-      const prompt = `You are a neutral, highly knowledgeable Election Guide Assistant for India. 
-      The user is speaking in language code: ${lang}. State context: ${userState}.
-      Answer the following question simply, factually, and without political bias. Do not use markdown headers, keep it conversational.
-      User Question: ${inputText}`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
-
-      const botMessage = { role: 'bot', content: response.text };
+      const responseText = await generateAIResponse({ apiKey, lang, userState, inputText: sanitizedInput });
+      const botMessage = { role: 'bot', content: responseText };
       setChatHistory(prev => [...prev, botMessage]);
-      speak(response.text);
+      speak(responseText);
     } catch (error) {
-      console.error(error);
       const errorMsg = { role: 'bot', content: "Sorry, I had trouble connecting. Please check your API key and internet." };
       setChatHistory(prev => [...prev, errorMsg]);
     } finally {
@@ -197,211 +193,26 @@ function App() {
     setStep('CONTENT')
   }
 
-
-
-  const renderContent = () => {
-    if (topic === 'process') {
-      return (
-        <div className="content-view">
-          <h2>{t.process.title}</h2>
-          <div className="phases-list">
-            {t.process.phases.map((phase, idx) => (
-              <div key={idx} className="phase-item glass-card">
-                <h3>{idx + 1}. {phase.name}</h3>
-                <p>{mode === 'eli10' ? `Imagine this: ${phase.desc}` : phase.desc}</p>
-              </div>
-            ))}
-          </div>
-          <p className="disclaimer">{t.process.disclaimer}</p>
-        </div>
-      )
-    }
-    if (topic === 'registration') {
-      return (
-        <div className="content-view">
-          <h2>{t.registration.title}</h2>
-          <div className="phases-list">
-            {t.registration.phases.map((phase, idx) => (
-              <div key={idx} className="phase-item glass-card">
-                <h3>{idx + 1}. {phase.name}</h3>
-                <p>{mode === 'eli10' ? `Simple step: ${phase.desc}` : phase.desc}</p>
-              </div>
-            ))}
-          </div>
-          {(t.registration.actionLink || t.registration.appLink) && (
-            <div style={{marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center'}}>
-              <button className="btn btn-whatsapp" onClick={() => shareToWhatsApp(`🗳️ Register to vote online! Official ECI Link: ${t.registration.actionLink?.url || 'https://voters.eci.gov.in/'}`)}>
-                 💬 Share Registration Link via WhatsApp
-              </button>
-              {t.registration.actionLink && (
-                <a href={t.registration.actionLink.url} target="_blank" rel="noopener noreferrer" className="btn" style={{display: 'inline-flex', textDecoration: 'none'}}>
-                  🔗 {t.registration.actionLink.text}
-                </a>
-              )}
-              {t.registration.appLink && (
-                <a href={t.registration.appLink.url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{display: 'inline-flex', textDecoration: 'none'}}>
-                  📱 {t.registration.appLink.text}
-                </a>
-              )}
-            </div>
-          )}
-        </div>
-      )
-    }
-    if (topic === 'steps') {
-      return (
-        <div className="content-view">
-          <h2>{t.steps.title}</h2>
-          <div className="steps-list">
-            {t.steps.phases.map((phase, idx) => (
-              <div key={idx} className="phase-item glass-card">
-                <h3>{phase.name}</h3>
-                <p>{mode === 'eli10' ? `At this step: ${phase.desc}` : phase.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )
-    }
-    if (topic === 'firstTime') {
-       return (
-        <div className="content-view">
-          <h2>{t.firstTime.title}</h2>
-          <p>{t.firstTime.intro}</p>
-          <div className="steps-list">
-            {t.firstTime.steps.map((s, idx) => (
-              <div key={idx} className="phase-item glass-card">
-                <h3>{s.name}</h3>
-                <p>{mode === 'eli10' ? `Tip: ${s.desc}` : s.desc}</p>
-              </div>
-            ))}
-          </div>
-          {(t.firstTime.actionLink || t.firstTime.appLink) && (
-            <div style={{marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center'}}>
-              {t.firstTime.actionLink && (
-                <a href={t.firstTime.actionLink.url} target="_blank" rel="noopener noreferrer" className="btn" style={{display: 'inline-flex', textDecoration: 'none'}}>
-                  🔗 {t.firstTime.actionLink.text}
-                </a>
-              )}
-              {t.firstTime.appLink && (
-                <a href={t.firstTime.appLink.url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{display: 'inline-flex', textDecoration: 'none'}}>
-                  📱 {t.firstTime.appLink.text}
-                </a>
-              )}
-            </div>
-          )}
-        </div>
-      )
-    }
-    if (topic === 'faqs') {
-      return (
-        <div className="content-view">
-          <h2>{t.faqs.title}</h2>
-          <div className="faq-list">
-            {t.faqs.items.map((item, idx) => (
-              <div key={idx} className="phase-item glass-card">
-                <h4>{item.q}</h4>
-                <p>{item.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )
-    }
-    if (topic === 'timeline') {
-      const stateInfo = stateElectionData[userState];
-      if (!stateInfo) {
-        return (
-          <div className="content-view">
-            <h2>{userState} Election Data</h2>
-            <div className="glass-card" style={{textAlign: 'center', padding: '3rem 1rem'}}>
-               <span style={{fontSize: '3rem'}}>⏳</span>
-               <h3>Data Updating...</h3>
-               <p style={{color: '#94a3b8'}}>We are currently compiling the exact historical election records for {userState}. Please check back soon!</p>
-            </div>
-          </div>
-        )
-      }
-
-      return (
-        <div className="content-view timeline-view">
-          <h2>{userState} Elections</h2>
-          
-          <div className="timeline-section upcoming-section glass-card" style={{borderLeft: '4px solid var(--accent)', marginBottom: '2rem'}}>
-             <div className="badge pulse-badge">Upcoming</div>
-             <h3 style={{marginTop: '0.5rem', color: 'var(--accent)'}}>{stateInfo.upcoming.expectedDate}</h3>
-             <p>{stateInfo.upcoming.type}</p>
-             <button className="btn btn-whatsapp" onClick={() => shareToWhatsApp(`⏳ Reminder! The next ${stateInfo.upcoming.type} in ${userState} is expected in ${stateInfo.upcoming.expectedDate}. Get ready to vote!`)} style={{marginTop: '1rem'}}>
-               💬 Share Reminder via WhatsApp
-             </button>
-          </div>
-
-          <h3 style={{marginBottom: '1.5rem', color: '#cbd5e1'}}>Historical Data</h3>
-          <div className="history-list">
-            {stateInfo.history.map((hist, idx) => (
-              <div key={idx} className="history-card glass-card">
-                 <div className="history-header">
-                    <span className="year-badge">{hist.year}</span>
-                    <span className="type-text">{hist.type}</span>
-                 </div>
-                 <div className="history-body">
-                    <p><strong>Date:</strong> {hist.date}</p>
-                    {hist.totalSeats && <p><strong>Total Seats:</strong> {hist.totalSeats}</p>}
-                    {hist.turnout && <p><strong>Voter Turnout:</strong> {hist.turnout}</p>}
-                    {hist.winningAlliance && <p><strong>Winning Party/Alliance:</strong> <span style={{color: 'var(--primary)'}}>{hist.winningAlliance}</span></p>}
-                    {hist.chiefMinister && <p><strong>Chief Minister:</strong> {hist.chiefMinister}</p>}
-                    {hist.note && <p style={{fontStyle: 'italic', color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.5rem'}}>{hist.note}</p>}
-                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )
-    }
-    
-    if (topic === 'booth') {
-      return (
-        <div className="content-view booth-view">
-          <h2>{t.booth.title}</h2>
-          <div className="glass-card" style={{textAlign: 'center', padding: '3rem 1rem'}}>
-             <span style={{fontSize: '3rem'}}>📍</span>
-             <h3 style={{margin: '1rem 0'}}>Official Electoral Search</h3>
-             <p style={{marginBottom: '2rem'}}>Search for your polling booth directly on the official Election Commission of India portal.</p>
-             <a href="https://electoralsearch.eci.gov.in/" target="_blank" rel="noopener noreferrer" className="btn" style={{display: 'inline-flex', textDecoration: 'none', padding: '1rem 2rem', fontSize: '1.2rem', background: 'var(--primary)'}}>
-                👉 Search on Official Website
-             </a>
-             <div style={{marginTop: '2rem'}}>
-                <button className="btn btn-whatsapp" onClick={() => shareToWhatsApp(`🗳️ Find your Polling Booth and Voter Details at the Official ECI Portal: https://electoralsearch.eci.gov.in/`)}>
-                   💬 Share Official Link via WhatsApp
-                </button>
-             </div>
-          </div>
-        </div>
-      )
-    }
-    return <p>Content coming soon for {topic}...</p>
-  }
-
   return (
-    <div className="chat-container">
-      <button className="voice-toggle" onClick={() => setVoiceEnabled(!voiceEnabled)}>
+    <main className="chat-container">
+      <button aria-label="Toggle Voice" className="voice-toggle" onClick={() => setVoiceEnabled(!voiceEnabled)}>
         {voiceEnabled ? '🔊 Voice On' : '🔇 Voice Off'}
       </button>
 
-      <div className="logo-container">
+      <header className="logo-container">
         <h1>🇮🇳 Election Guide</h1>
         <p className="subtitle">Your digital assistant for Indian Democracy</p>
-      </div>
+      </header>
 
-      <div className="interaction-area">
+      <section className="interaction-area">
         {step === 'LANGUAGE' && (
           <div className="message-group">
-            <div className="message-bubble message-bot">
-              👋 Namaste! Please choose your preferred language to continue.
+            <div className="message-bubble message-bot" role="status">
+              <span aria-hidden="true">👋</span> Namaste! Please choose your preferred language to continue.
             </div>
             <div className="option-grid">
               {languages.map(l => (
-                <button key={l.code} className="btn btn-secondary" onClick={() => handleLangSelect(l.code)}>
+                <button aria-label={`Select ${l.native} language`} key={l.code} className="btn btn-secondary" onClick={() => handleLangSelect(l.code)}>
                   {l.native}
                 </button>
               ))}
@@ -411,12 +222,12 @@ function App() {
 
         {step === 'STATE' && (
           <div className="message-group">
-            <div className="message-bubble message-bot">
+            <div className="message-bubble message-bot" role="status">
               {t.statePrompt}
             </div>
             <div className="option-grid" style={{maxHeight: '400px', overflowY: 'auto'}}>
               {states.map(s => (
-                <button key={s} className="btn btn-secondary" onClick={() => handleStateSelect(s)}>
+                <button aria-label={`Select state ${s}`} key={s} className="btn btn-secondary" onClick={() => handleStateSelect(s)}>
                   {s}
                 </button>
               ))}
@@ -426,11 +237,11 @@ function App() {
 
         {step === 'MENU' && (
           <div className="message-group">
-            <div className="message-bubble message-bot">
+            <div className="message-bubble message-bot" role="status">
               {t.topicPrompt} (State: {userState})
             </div>
-            <div className="option-grid">
-              <button className="btn" style={{gridColumn: '1 / -1', background: 'var(--secondary)'}} onClick={() => setStep('AI_CHAT')}>🤖 Ask AI (Free Chat)</button>
+            <nav className="option-grid" aria-label="Topics Menu">
+              <button className="btn" style={{gridColumn: '1 / -1', background: 'var(--secondary)'}} onClick={() => setStep('AI_CHAT')}><span aria-hidden="true">🤖</span> Ask AI (Free Chat)</button>
               <button className="btn" onClick={() => handleTopicSelect('process')}>{t.topics.process}</button>
               <button className="btn" onClick={() => handleTopicSelect('registration')}>{t.topics.registration}</button>
               <button className="btn" onClick={() => handleTopicSelect('steps')}>{t.topics.steps}</button>
@@ -438,27 +249,33 @@ function App() {
               <button className="btn" onClick={() => handleTopicSelect('firstTime')}>{t.topics.firstTime}</button>
               <button className="btn" style={{gridColumn: '1 / -1'}} onClick={() => handleTopicSelect('timeline')}>{t.topics.timeline}</button>
               <button className="btn" style={{gridColumn: '1 / -1', background: 'var(--accent)'}} onClick={() => handleTopicSelect('booth')}>{t.topics.booth}</button>
-            </div>
+            </nav>
           </div>
         )}
 
         {step === 'CONTENT' && (
           <div className="message-group">
-            <div className="controls glass-card" style={{display: 'flex', gap: '1rem', marginBottom: '1rem', padding: '1rem'}}>
-               <button className={`btn ${mode === 'normal' ? '' : 'btn-secondary'}`} onClick={() => setMode('normal')}>{t.modes.normal}</button>
-               <button className={`btn ${mode === 'eli10' ? '' : 'btn-secondary'}`} onClick={() => setMode('eli10')}>{t.modes.eli10}</button>
-               <button className={`btn ${mode === 'summary' ? '' : 'btn-secondary'}`} onClick={() => setMode('summary')}>{t.modes.summary}</button>
+            <div className="controls glass-card" style={{display: 'flex', gap: '1rem', marginBottom: '1rem', padding: '1rem'}} role="group" aria-label="Reading modes">
+               <button aria-pressed={mode === 'normal'} className={`btn ${mode === 'normal' ? '' : 'btn-secondary'}`} onClick={() => setMode('normal')}>{t.modes.normal}</button>
+               <button aria-pressed={mode === 'eli10'} className={`btn ${mode === 'eli10' ? '' : 'btn-secondary'}`} onClick={() => setMode('eli10')}>{t.modes.eli10}</button>
+               <button aria-pressed={mode === 'summary'} className={`btn ${mode === 'summary' ? '' : 'btn-secondary'}`} onClick={() => setMode('summary')}>{t.modes.summary}</button>
             </div>
-            {renderContent()}
+            <TopicContent 
+              topic={topic} 
+              t={t} 
+              mode={mode} 
+              userState={userState} 
+              shareToWhatsApp={shareToWhatsApp} 
+            />
           </div>
         )}
 
         {step === 'AI_CHAT' && (
           <div className="message-group" style={{width: '100%'}}>
-            <div className="chat-history">
+            <div className="chat-history" aria-live="polite" aria-relevant="additions">
               {chatHistory.length === 0 && (
                 <div className="message-bubble message-bot" style={{alignSelf: 'center', textAlign: 'center'}}>
-                  🤖 I am your AI Assistant powered by Gemini. Ask me anything about the Indian Election Process in your language!
+                  <span aria-hidden="true">🤖</span> I am your AI Assistant powered by Gemini. Ask me anything about the Indian Election Process in your language!
                 </div>
               )}
               {chatHistory.map((msg, idx) => (
@@ -466,7 +283,7 @@ function App() {
                   {msg.content}
                 </div>
               ))}
-              {isTyping && <div className="typing-indicator">Assistant is typing...</div>}
+              {isTyping && <div className="typing-indicator" aria-live="polite">Assistant is typing...</div>}
               <div ref={chatEndRef} />
             </div>
             
@@ -475,20 +292,23 @@ function App() {
                 type="text" 
                 className="chat-input"
                 placeholder="Type your question here..."
+                aria-label="Chat input"
+                maxLength={500}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               />
-              <button className="send-btn" onClick={handleSendMessage} disabled={isTyping || !inputText.trim()}>
+              <button aria-label="Send Message" className="send-btn" onClick={handleSendMessage} disabled={isTyping || !inputText.trim()}>
                 ➤
               </button>
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       <div className="mic-container">
         <button 
+          aria-label="Voice Input"
           className={`mic-btn ${isListening ? 'listening' : ''}`} 
           onClick={startListening}
           title="Click to speak your choice"
@@ -497,29 +317,30 @@ function App() {
         </button>
       </div>
 
-      <div className="nav-footer" style={{marginTop: '0rem', display: 'flex', gap: '1rem', justifyContent: 'center'}}>
+      <nav className="nav-footer" style={{marginTop: '0rem', display: 'flex', gap: '1rem', justifyContent: 'center'}} aria-label="Footer Navigation">
         {step !== 'LANGUAGE' && (
-          <button className="btn btn-secondary" onClick={goBack}>⬅️ Back</button>
+          <button aria-label="Go Back" className="btn btn-secondary" onClick={goBack}><span aria-hidden="true">⬅️</span> Back</button>
         )}
-        <button className="btn btn-secondary" onClick={reset}>🔄 Reset</button>
-        <button className="btn btn-secondary" onClick={() => setShowSettings(true)}>⚙️ Settings</button>
-      </div>
+        <button aria-label="Reset Application" className="btn btn-secondary" onClick={reset}><span aria-hidden="true">🔄</span> Reset</button>
+        <button aria-label="Settings" className="btn btn-secondary" onClick={() => setShowSettings(true)}><span aria-hidden="true">⚙️</span> Settings</button>
+      </nav>
 
       {showSettings && (
-        <div className="modal-overlay">
+        <div className="modal-overlay" role="dialog" aria-labelledby="settings-title" aria-modal="true">
           <div className="modal-content">
-            <h3 style={{marginTop: 0, color: 'var(--primary)'}}>🤖 AI Configuration</h3>
-            <p style={{fontSize: '0.9rem', color: '#94a3b8'}}>To use the free chat feature, please enter your Google Gemini API Key. It will be saved securely in your browser.</p>
+            <h3 id="settings-title" style={{marginTop: 0, color: 'var(--primary)'}}><span aria-hidden="true">🤖</span> AI Configuration</h3>
+            <p style={{fontSize: '0.9rem', color: '#94a3b8'}}>To use the free chat feature, please enter your Google Gemini API Key. It will be saved securely in your browser's local storage.</p>
             <input 
               type="password" 
               className="modal-input" 
               placeholder="Paste your API Key here"
+              aria-label="API Key"
               defaultValue={apiKey}
               id="apiKeyInput"
             />
             <div style={{display: 'flex', gap: '1rem', marginTop: '1rem'}}>
-              <button className="btn" style={{flex: 1}} onClick={() => saveApiKey(document.getElementById('apiKeyInput').value)}>Save Key</button>
-              <button className="btn btn-secondary" onClick={() => setShowSettings(false)}>Cancel</button>
+              <button aria-label="Save API Key" className="btn" style={{flex: 1}} onClick={() => saveApiKey(document.getElementById('apiKeyInput').value)}>Save Key</button>
+              <button aria-label="Cancel" className="btn btn-secondary" onClick={() => setShowSettings(false)}>Cancel</button>
             </div>
             <p style={{fontSize: '0.8rem', marginTop: '1.5rem', textAlign: 'center'}}>
               <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{color: 'var(--secondary)'}}>Get a free API key here</a>
@@ -527,7 +348,7 @@ function App() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   )
 }
 

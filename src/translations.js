@@ -74,7 +74,8 @@ const baseTranslations = {
         { name: "EPIC Generation", desc: "Once verified, your Electors Photo Identity Card (EPIC) is generated." }
       ],
       actionLink: { text: "Register Online Here (Official Portal)", url: "https://voters.eci.gov.in/" },
-      appLink: { text: "Voter Helpline App (Android)", url: "https://play.google.com/store/apps/details?id=com.eci.citizen" }
+      appLink: { text: "Voter Helpline App (Android)", url: "https://play.google.com/store/apps/details?id=com.eci.citizen" },
+      portalWarning: "⚠️ Note: The official government portal may take a few moments to load or show a blank screen. If it fails, please use the Voter Helpline App."
     },
     steps: {
       title: "Step-by-Step Voting Process",
@@ -162,7 +163,8 @@ const baseTranslations = {
         { name: "EPIC जनरेशन", desc: "सत्यापित होने के बाद, आपका वोटर आईडी (EPIC) जनरेट हो जाता है।" }
       ],
       actionLink: { text: "यहां ऑनलाइन पंजीकरण करें (आधिकारिक पोर्टल)", url: "https://voters.eci.gov.in/" },
-      appLink: { text: "वोटर हेल्पलाइन ऐप (Android)", url: "https://play.google.com/store/apps/details?id=com.eci.citizen" }
+      appLink: { text: "वोटर हेल्पलाइन ऐप (Android)", url: "https://play.google.com/store/apps/details?id=com.eci.citizen" },
+      portalWarning: "⚠️ नोट: आधिकारिक सरकारी पोर्टल लोड होने में कुछ समय ले सकता है या खाली स्क्रीन दिखा सकता है। यदि यह विफल रहता है, तो कृपया वोटर हेल्पलाइन ऐप का उपयोग करें।"
     },
     steps: {
       title: "मतदान की चरण-दर-चरण प्रक्रिया",
@@ -250,7 +252,8 @@ const baseTranslations = {
         { name: "அடையாள அட்டை", desc: "சரிபார்க்கப்பட்ட பின் உங்கள் வாக்காளர் அட்டை (EPIC) வழங்கப்படும்." }
       ],
       actionLink: { text: "ஆன்லைனில் பதிவு செய்ய (அதிகாரப்பூர்வ தளம்)", url: "https://voters.eci.gov.in/" },
-      appLink: { text: "வாக்காளர் உதவிச் செயலி (Android)", url: "https://play.google.com/store/apps/details?id=com.eci.citizen" }
+      appLink: { text: "வாக்காளர் உதவிச் செயலி (Android)", url: "https://play.google.com/store/apps/details?id=com.eci.citizen" },
+      portalWarning: "⚠️ குறிப்பு: அதிகாரப்பூர்வ அரசு தளம் ஏற்றப்பட சிறிது நேரம் ஆகலாம் அல்லது வெற்றுத் திரையைக் காட்டலாம். அது தோல்வியுற்றால், வாக்காளர் உதவிச் செயலியைப் பயன்படுத்தவும்."
     },
     steps: {
       title: "வாக்களிக்கும் முறைகள்",
@@ -338,7 +341,8 @@ const baseTranslations = {
         { name: "కార్డ్ జారీ", desc: "ధృవీకరించిన తర్వాత మీ ఓటరు కార్డు (EPIC) జారీ చేయబడుతుంది." }
       ],
       actionLink: { text: "ఆన్‌లైన్‌లో ఇక్కడ నమోదు చేసుకోండి (అధికారిక పోర్టల్)", url: "https://voters.eci.gov.in/" },
-      appLink: { text: "ఓటరు హెల్ప్‌లైన్ యాప్ (Android)", url: "https://play.google.com/store/apps/details?id=com.eci.citizen" }
+      appLink: { text: "ఓటరు హెల్ప్‌లైన్ యాప్ (Android)", url: "https://play.google.com/store/apps/details?id=com.eci.citizen" },
+      portalWarning: "⚠️ గమనిక: అధికారిక ప్రభుత్వ పోర్టల్ లోడ్ అవ్వడానికి కొంత సమయం పట్టవచ్చు లేదా ఖాళీ స్క్రీన్‌ను చూపించవచ్చు. అది విఫలమైతే, దయచేసి ఓటరు హెల్ప్‌లైన్ యాప్‌ను ఉపయోగించండి."
     },
     steps: {
       title: "ఓటింగ్ దశలు",
@@ -426,7 +430,8 @@ const baseTranslations = {
         { name: "ಕಾರ್ಡ್ ವಿತರಣೆ", desc: "ಪರಿಶೀಲನೆಯ ನಂತರ ಮತದಾರರ ಚೀಟಿ (EPIC) ನೀಡಲಾಗುತ್ತದೆ." }
       ],
       actionLink: { text: "ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ನೋಂದಾಯಿಸಿ (ಅಧಿಕೃತ ಪೋರ್ಟಲ್)", url: "https://voters.eci.gov.in/" },
-      appLink: { text: "ಮತದಾರರ ಸಹಾಯವಾಣಿ ಆಪ್ (Android)", url: "https://play.google.com/store/apps/details?id=com.eci.citizen" }
+      appLink: { text: "ಮತದಾರರ ಸಹಾಯವಾಣಿ ಆಪ್ (Android)", url: "https://play.google.com/store/apps/details?id=com.eci.citizen" },
+      portalWarning: "⚠️ ಗಮನಿಸಿ: ಅಧಿಕೃತ ಸರ್ಕಾರಿ ಪೋರ್ಟಲ್ ಲೋಡ್ ಆಗಲು ಸ್ವಲ್ಪ ಸಮಯ ತೆಗೆದುಕೊಳ್ಳಬಹುದು ಅಥವಾ ಖಾಲಿ ಪರದೆಯನ್ನು ತೋರಿಸಬಹುದು. ಅದು ವಿಫಲವಾದರೆ, ದಯವಿಟ್ಟು ಮತದಾರರ ಸಹಾಯವಾಣಿ ಆಪ್ ಬಳಸಿ."
     },
     steps: {
       title: "ಮತದಾನದ ಹಂತಗಳು",
